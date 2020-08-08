@@ -71,6 +71,13 @@ class Artist(db.Model):
 # TODO Implement Show model, and complete all model relationships and properties, as a database migration.
 
 #----------------------------------------------------------------------------#
+# Utils.
+#----------------------------------------------------------------------------#
+
+def split_tags(tags):
+  return tags.split(',')
+
+#----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
 
@@ -129,7 +136,9 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: add upcoming shows (artist_id, artist_name, artist_image_link, start_time YYYY-MM-DDTHH:MM:SS.ssssZ
   # TODO: add past_shows_count, upcoming_shows_count
-  return render_template('pages/show_venue.html', venue=Venue.query.get(venue_id))
+  venue = Venue.query.get(venue_id)
+  venue.genres = split_tags(venue.genres)
+  return render_template('pages/show_venue.html', venue=venue)
 
 #  Create Venue
 #  ----------------------------------------------------------------
@@ -185,7 +194,9 @@ def search_artists():
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
-  return render_template('pages/show_artist.html', artist=Artist.query.get(artist_id))
+  artist = Artist.query.get(artist_id)
+  artist.genres = split_tags(artist.genres)
+  return render_template('pages/show_artist.html', artist=artist)
 
 #  Update
 #  ----------------------------------------------------------------
