@@ -29,6 +29,12 @@ migrate = Migrate(app, db, compare_type = True)
 # Models.
 #----------------------------------------------------------------------------#
 
+show = db.Table('show',
+    db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id'), primary_key=True),
+    db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id'), primary_key=True),
+    db.Column('start_time', db.DateTime, nullable = False)
+)
+
 class Venue(db.Model):
     __tablename__ = 'Venue'
 
@@ -44,6 +50,8 @@ class Venue(db.Model):
     website = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean, default = False)
     seeking_description = db.Column(db.String(500))
+
+    shows = db.relationship('Artist', secondary = show, backref = db.backref('shows', lazy = True))
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
