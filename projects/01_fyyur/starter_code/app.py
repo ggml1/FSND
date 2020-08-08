@@ -53,6 +53,35 @@ class Venue(db.Model):
 
     shows = db.relationship('Artist', secondary = show, backref = db.backref('shows', lazy = True))
 
+    @staticmethod
+    def parse_show_results(show_list):
+      data = []
+
+      for show in show_list:
+        artist = Artist.query.get(show.artist_id)
+        data.append({
+          'artist_id': artist.id,
+          'artist_name': artist.name,
+          'artist_image_link': artist.image_link,
+          'start_time': show.start_time
+        })
+        
+      return data
+
+    def get_upcoming_shows(self):
+      result = db.session.query(show)                                    \
+                         .filter(show.c.venue_id == self.id,             \
+                                  datetime.utcnow() < show.c.start_time) \
+                         .all()
+      return Venue.parse_show_results(result)
+
+    def get_past_shows(self):
+      result = db.session.query(show)                                    \
+                         .filter(show.c.venue_id == self.id,             \
+                                  datetime.utcnow() > show.c.start_time) \
+                         .all()
+      return Venue.parse_show_results(result)
+
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -68,6 +97,35 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean, default = False)
     seeking_description = db.Column(db.String(500))
 
+    @staticmethod
+    def parse_show_results(show_list):
+      data = []
+
+      for show in show_list:
+        venue = Venue.query.get(show.venue_id)
+        data.append({
+          'venue_id': venue.id,
+          'venue_name': venue.name,
+          'venue_image_link': venue.image_link,
+          'start_time': show.start_time
+        })
+        
+      return data
+
+    def get_upcoming_shows(self):
+      result = db.session.query(show)                                    \
+                         .filter(show.c.artist_id == self.id,             \
+                                  datetime.utcnow() < show.c.start_time) \
+                         .all()
+      return Artist.parse_show_results(result)
+
+    def get_past_shows(self):
+      result = db.session.query(show)                                    \
+                         .filter(show.c.artist_id == self.id,             \
+                                  datetime.utcnow() > show.c.start_time) \
+                         .all()
+      return Artist.parse_show_results(result)
+
 # TODO Implement Show model, and complete all model relationships and properties, as a database migration.
 
 #----------------------------------------------------------------------------#
@@ -82,7 +140,7 @@ def split_tags(tags):
 #----------------------------------------------------------------------------#
 
 def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
+  date = dateutil.parser.parse(str(value))
   if format == 'full':
       format="EEEE MMMM, d, y 'at' h:mma"
   elif format == 'medium':
@@ -138,6 +196,10 @@ def show_venue(venue_id):
   # TODO: add past_shows_count, upcoming_shows_count
   venue = Venue.query.get(venue_id)
   venue.genres = split_tags(venue.genres)
+  venue.upcoming_shows = venue.get_upcoming_shows()
+  venue.upcoming_shows_count = len(venue.upcoming_shows)
+  venue.past_shows = venue.get_past_shows()
+  venue.past_shows_count = len(venue.past_shows)
   return render_template('pages/show_venue.html', venue=venue)
 
 #  Create Venue
@@ -196,6 +258,10 @@ def search_artists():
 def show_artist(artist_id):
   artist = Artist.query.get(artist_id)
   artist.genres = split_tags(artist.genres)
+  artist.upcoming_shows = artist.get_upcoming_shows()
+  artist.upcoming_shows_count = len(artist.upcoming_shows)
+  artist.past_shows = artist.get_past_shows()
+  artist.past_shows_count = len(artist.past_shows)
   return render_template('pages/show_artist.html', artist=artist)
 
 #  Update
