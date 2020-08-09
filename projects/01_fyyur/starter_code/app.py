@@ -131,9 +131,7 @@ def delete_venue(venue_id):
   finally:
     db.session.close()
 
-  # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-  # clicking that button delete it from the db then redirect the user to the homepage
-  return redirect(url_for('index'))
+  return render_template('pages/home.html')
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -178,13 +176,13 @@ def edit_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
   try:
-    updated_artist = Artist(name = request.form['name'],
-                            city = request.form['city'],
-                            state = request.form['state'],
-                            phone = request.form['phone'],
-                            genres = request.form.getlist('genres'),
-                            facebook_link = request.form['facebook_link'])
-    db.session.add(updated_artist)
+    artist = Artist.query.get(artist_id)
+    artist.name = request.form['name']
+    artist.city = request.form['city']
+    artist.state = request.form['state']
+    artist.phone = request.form['phone']
+    artist.genres = request.form.getlist('genres')
+    artist.facebook_link = request.form['facebook_link']
     db.session.commit()
     flash('Artist ' + request.form['name'] + ' was successfully updated!')
   except:
@@ -204,14 +202,14 @@ def edit_venue(venue_id):
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
   try:
-    update_venue = Venue(name = request.form['name'],
-                      city = request.form['city'],
-                      state = request.form['state'],
-                      address = request.form['address'],
-                      phone = request.form['phone'],
-                      genres = request.form.getlist('genres'),
-                      facebook_link = request.form['facebook_link'])
-    db.session.add(update_venue)
+    venue = Venue.query.get(venue_id)
+    venue.name = request.form['name']
+    venue.city = request.form['city']
+    venue.state = request.form['state']
+    venue.address = request.form['address']
+    venue.phone = request.form['phone']
+    venue.genres = request.form.getlist('genres')
+    venue.facebook_link = request.form['facebook_link']
     db.session.commit()
     flash('Venue ' + request.form['name'] + ' was successfully updated!')
   except:
