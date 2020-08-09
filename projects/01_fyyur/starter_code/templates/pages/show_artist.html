@@ -40,7 +40,11 @@
 		{% endif %}
 	</div>
 	<div class="col-sm-6">
-		<img src="{{ artist.image_link }}" alt="Artist Image" />
+    {% if artist.image_link %}
+    <img src="{{ artist.image_link }}" alt="Artist Image" />
+    {% else %}
+    <img src="https://previews.123rf.com/images/ramlight/ramlight1903/ramlight190300018/120164645-minions-toy-isolated-on-white-background-an-action-figure-from-despicable-me-series-animated-3d-film.jpg" alt="Artist Image" />
+    {% endif %}
 	</div>
 </div>
 <section>

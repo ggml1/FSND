@@ -44,7 +44,11 @@
 		{% endif %}
 	</div>
 	<div class="col-sm-6">
-		<img src="{{ venue.image_link }}" alt="Venue Image" />
+		{% if venue.image_link %}
+    <img src="{{ venue.image_link }}" alt="Venue Image" />
+    {% else %}
+    <img src="https://img.freepik.com/free-vector/music-bar-beer-pub-with-live-performances-cartoon-interior_1441-3522.jpg?size=664&ext=jpg" alt="Venue Image" />
+    {% endif %}
 	</div>
 </div>
 <section>
@@ -79,9 +83,11 @@
 <script>
   function deleteVenue() {
     fetch('/venues/{{ venue.id }}', {
-      method: 'GET'
+      method: 'DELETE'
     })
-    .then(function() {})
+    .then(function(response) {
+      return response;
+    })
     .catch(function(err) {
       return err;
     })

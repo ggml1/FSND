@@ -28,6 +28,18 @@ migrate = Migrate(app, db, compare_type = True)
 from models import *
 
 #----------------------------------------------------------------------------#
+# Utils.
+#----------------------------------------------------------------------------#
+
+def is_valid_venue(venue_id):
+  venue = Venue.query.get(venue_id)
+  return venue is not None
+
+def is_valid_artist(artist_id):
+  artist = Artist.query.get(artist_id)
+  return artist is not None
+
+#----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
 
@@ -101,6 +113,7 @@ def create_venue_form():
 def create_venue_submission():
   try:
     new_venue = Venue(name = request.form['name'],
+                      image_link = request.form['image_link'],
                       city = request.form['city'],
                       state = request.form['state'],
                       address = request.form['address'],
@@ -118,7 +131,7 @@ def create_venue_submission():
 
   return redirect(url_for('index'))
 
-@app.route('/venues/<venue_id>')
+@app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
   venue = Venue.query.get(venue_id)
   try:
@@ -169,15 +182,31 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
+  artist = Artist.query.get(artist_id)
+  
+  if artist is None:
+    flash(f'Artist with ID {artist_id}does not exist.')
+    return redirect(url_for('index'))
+
+  form = ArtistForm()
+  form.name.data = artist.name
+  form.image_link.data = artist.image_link
+  form.city.data = artist.city
+  form.state.data = artist.state
+  form.phone.data = artist.phone
+  form.genres.data = artist.genres
+  form.facebook_link.data = artist.facebook_link
+
   return render_template('forms/edit_artist.html',
-                          form=ArtistForm(),
-                          artist=Artist.query.get(artist_id))
+                          form=form,
+                          artist=artist)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
   try:
     artist = Artist.query.get(artist_id)
     artist.name = request.form['name']
+    artist.image_link = request.form['image_link']
     artist.city = request.form['city']
     artist.state = request.form['state']
     artist.phone = request.form['phone']
@@ -195,9 +224,25 @@ def edit_artist_submission(artist_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
+  venue = Venue.query.get(venue_id)
+  
+  if venue is None:
+    flash(f'Venue with ID {venue_id}does not exist.')
+    return redirect(url_for('index'))
+
+  form = VenueForm()
+  form.name.data = venue.name
+  form.image_link.data = venue.image_link
+  form.city.data = venue.city
+  form.state.data = venue.state
+  form.address.data = venue.address
+  form.phone.data = venue.phone
+  form.genres.data = venue.genres
+  form.facebook_link.data = venue.facebook_link
+
   return render_template('forms/edit_venue.html',
-                          form=VenueForm(),
-                          venue=Venue.query.get(venue_id))
+                          form=form,
+                          venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
@@ -232,6 +277,7 @@ def create_artist_form():
 def create_artist_submission():
   try:
     new_artist = Artist(name = request.form['name'],
+                        image_link = request.form['image_link'],
                         city = request.form['city'],
                         state = request.form['state'],
                         phone = request.form['phone'],
@@ -277,6 +323,14 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
+  if not is_valid_artist(request.form['artist_id']):
+    flash('The specified artist does not exist!')
+    return render_template('forms/new_show.html', form = ShowForm())
+
+  if not is_valid_venue(request.form['venue_id']):
+    flash('The specified venue does not exist!')
+    return render_template('forms/new_show.html', form = ShowForm())
+
   try:
     new_show = Show(artist_id = request.form['artist_id'],
                     venue_id = request.form['venue_id'],
