@@ -28,13 +28,6 @@ migrate = Migrate(app, db, compare_type = True)
 from models import *
 
 #----------------------------------------------------------------------------#
-# Utils.
-#----------------------------------------------------------------------------#
-
-def split_tags(tags):
-  return tags.split(',')
-
-#----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
 
@@ -94,7 +87,6 @@ def show_venue(venue_id):
   # TODO: add upcoming shows (artist_id, artist_name, artist_image_link, start_time YYYY-MM-DDTHH:MM:SS.ssssZ
   # TODO: add past_shows_count, upcoming_shows_count
   venue = Venue.query.get(venue_id)
-  venue.genres = split_tags(venue.genres)
   venue.upcoming_shows = venue.get_upcoming_shows()
   venue.upcoming_shows_count = len(venue.upcoming_shows)
   venue.past_shows = venue.get_past_shows()
@@ -156,7 +148,6 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
   artist = Artist.query.get(artist_id)
-  artist.genres = split_tags(artist.genres)
   artist.upcoming_shows = artist.get_upcoming_shows()
   artist.upcoming_shows_count = len(artist.upcoming_shows)
   artist.past_shows = artist.get_past_shows()
@@ -201,15 +192,23 @@ def create_artist_form():
 
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
-  # called upon submitting the new artist listing form
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  try:
+    new_artist = Artist(name = request.form['name'],
+                        city = request.form['city'],
+                        state = request.form['state'],
+                        phone = request.form['phone'],
+                        genres = ','.join(request.form.getlist['genres']),
+                        facebook_link = request.form['facebook_link'])
+    db.session.add(new_artist)
+    db.session.commit()
+    flash('Artist ' + request.form['name'] + ' was successfully listed!')
+  except:
+    db.session.rollback()
+    flash('An error occurred. Artist ' + request.form['name'] + ' could not be listed.')
+  finally:
+    db.session.close()
 
-  # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
-  return render_template('pages/home.html')
+  return redirect(url_for('index'))
 
 
 #  Shows
@@ -217,9 +216,6 @@ def create_artist_submission():
 
 @app.route('/shows')
 def shows():
-  # displays list of shows at /shows
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
   global show
   shows = db.session.query(show).all()
   data = []
