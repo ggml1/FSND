@@ -1,11 +1,12 @@
 from datetime import datetime
 from app import db
 
-show = db.Table('show',
-    db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id'), primary_key=True),
-    db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id'), primary_key=True),
-    db.Column('start_time', db.DateTime, nullable = False, primary_key=True)
-)
+class Show(db.Model):
+    __tablename__ = 'Show'
+    id = db.Column(db.Integer, primary_key=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
+    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=True)
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
@@ -23,13 +24,15 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean, default = False)
     seeking_description = db.Column(db.String(500))
 
-    shows = db.relationship('Artist', secondary = show, backref = db.backref('shows', lazy = True))
+    shows = db.relationship('Show', backref='venue', lazy = True)
 
-    @staticmethod
-    def parse_show_results(show_list):
+    def get_upcoming_shows(self):
       data = []
 
-      for show in show_list:
+      for show in self.shows:
+        if (show.start_time < datetime.utcnow()):
+          continue
+
         artist = Artist.query.get(show.artist_id)
         data.append({
           'artist_id': artist.id,
@@ -40,19 +43,22 @@ class Venue(db.Model):
         
       return data
 
-    def get_upcoming_shows(self):
-      result = db.session.query(show)                                    \
-                         .filter(show.c.venue_id == self.id,             \
-                                  datetime.utcnow() < show.c.start_time) \
-                         .all()
-      return Venue.parse_show_results(result)
-
     def get_past_shows(self):
-      result = db.session.query(show)                                    \
-                         .filter(show.c.venue_id == self.id,             \
-                                  datetime.utcnow() > show.c.start_time) \
-                         .all()
-      return Venue.parse_show_results(result)
+      data = []
+
+      for show in self.shows:
+        if (show.start_time >= datetime.utcnow()):
+          continue
+
+        artist = Artist.query.get(show.artist_id)
+        data.append({
+          'artist_id': artist.id,
+          'artist_name': artist.name,
+          'artist_image_link': artist.image_link,
+          'start_time': show.start_time
+        })
+        
+      return data
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -69,11 +75,15 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean, default = False)
     seeking_description = db.Column(db.String(500))
 
-    @staticmethod
-    def parse_show_results(show_list):
+    shows = db.relationship('Show', backref='artist', lazy = True)
+
+    def get_upcoming_shows(self):
       data = []
 
-      for show in show_list:
+      for show in self.shows:
+        if (show.start_time < datetime.utcnow()):
+          continue
+
         venue = Venue.query.get(show.venue_id)
         data.append({
           'venue_id': venue.id,
@@ -84,16 +94,19 @@ class Artist(db.Model):
         
       return data
 
-    def get_upcoming_shows(self):
-      result = db.session.query(show)                                    \
-                         .filter(show.c.artist_id == self.id,             \
-                                  datetime.utcnow() < show.c.start_time) \
-                         .all()
-      return Artist.parse_show_results(result)
-
     def get_past_shows(self):
-      result = db.session.query(show)                                    \
-                         .filter(show.c.artist_id == self.id,             \
-                                  datetime.utcnow() > show.c.start_time) \
-                         .all()
-      return Artist.parse_show_results(result)
+      data = []
+
+      for show in self.shows:
+        if (show.start_time >= datetime.utcnow()):
+          continue
+
+        venue = Venue.query.get(show.venue_id)
+        data.append({
+          'venue_id': venue.id,
+          'venue_name': venue.name,
+          'venue_image_link': venue.image_link,
+          'start_time': show.start_time
+        })
+        
+      return data
