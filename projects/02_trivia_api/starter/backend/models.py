@@ -79,3 +79,6 @@ class Category(db.Model):
       'id': self.id,
       'type': self.type
     }
+
+def format_object(obj):
+  return [ o.format() for o in obj ]
