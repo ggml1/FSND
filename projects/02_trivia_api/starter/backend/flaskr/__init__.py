@@ -33,7 +33,7 @@ def create_app(test_config=None):
     end = start + 10
 
     question_list = format_object(Question.query.all())
-    category_list = [ category['type'] for category in format_object(Category.query.all()) ]
+    category_list = [ category.type for category in Category.query.all() ]
     paginated_question_list = question_list[start:end]
 
     return jsonify({
@@ -75,8 +75,7 @@ def create_app(test_config=None):
       question = Question.query.get(question_id)
       question.delete()
       db.session.commit()
-    except Exception as e:
-      print(e)
+    except:
       db.session.rollback()
       abort(400)
     finally:
